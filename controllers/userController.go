@@ -161,7 +161,7 @@ func GetUsers() gin.HandlerFunc {
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 
 		recordsPerPage, err := strconv.Atoi(c.Query("recordsPerPage"))
 
@@ -169,41 +169,39 @@ func GetUsers() gin.HandlerFunc {
 			recordsPerPage = 10
 		}
 
-		page, err1 :=  strconv.Atoi(c.Query("page"))
-		if err1 != nil || page < 1{
+		page, err1 := strconv.Atoi(c.Query("page"))
+		if err1 != nil || page < 1 {
 			page = 1
 		}
 
 		startIndex := (page - 1) * recordsPerPage
-		startIndex, err = strconv.Atoi(c.Query("startIndex")) 
+		startIndex, err = strconv.Atoi(c.Query("startIndex"))
 
 		matchStage := bson.D{{"$match", bson.D{{}}}}
+
 		groupStage := bson.D{{"$group", bson.D{
-			{"_id",bson.D{{"_id","null"}}},
-			{"total_count", bson.D{{"$sum",1}}},
-			{"data",bson.D{"$push","$$ROOT"}}},
-		}}}
+			{"_id", bson.D{{"_id", "null"}}},
+			{"total_count", bson.D{{"$sum", 1}}},
+			{"data", bson.D{{"$push", "$$ROOT"}}}}}}
+
 		projectStage := bson.D{
 			{"$project", bson.D{
-				{"_id",0},
+				{"_id", 0},
 				{"total_count", 1},
-				{"user_items", bson.D{{"slice", []interface{}{"$data",startIndex, recordsPerPage}}}},
-			}}
-		}
+				{"user_items", bson.D{{"$slice", []interface{}{"$data", startIndex, recordsPerPage}}}}}}}
 
 		result, err := userCollection.Aggregate(ctx, mongo.Pipeline{
-			matchStage, groupStage, projectStage
-		})
+			matchStage, groupStage, projectStage})
 
 		defer cancel()
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error":"Error listing user items"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error listing user items"})
 		}
 
 		var allUsers []bson.M
 
-		if err := result.All(ctx, &allUsers); err != nil{
+		if err = result.All(ctx, &allUsers); err != nil {
 			log.Fatal(err)
 		}
 
@@ -236,6 +234,6 @@ func GetUser() gin.HandlerFunc {
 	}
 }
 
-func CreateUser() {
+// func CreateUser() {
 
-}
+// }

@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	helper "go-auth/helpers"
 	"net/http"
+
+	helper "github.com/arniemutasa/go-auth/helpers"
 
 	"github.com/gin-gonic/gin"
 )
